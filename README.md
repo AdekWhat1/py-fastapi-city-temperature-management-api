@@ -1,60 +1,77 @@
-## Task Description
+# Weather & Cities Management API
 
-You are required to create a FastAPI application that manages city data and their corresponding temperature data. The application will have two main components (apps):
+Модульний веб-сервіс на **FastAPI** для керування списком міст та збереження їхньої поточної температури з використанням асинхронного **Open-Meteo API**
 
-1. A CRUD (Create, Read, Update, Delete) API for managing city data.
-2. An API that fetches current temperature data for all cities in the database and stores this data in the database. This API should also provide a list endpoint to retrieve the history of all temperature data.
+## 🛠 Технологічний стек
 
-### Part 1: City CRUD API
+* **Python 3.10+**
+* **FastAPI** — веб-фреймворк
+* **SQLAlchemy** — ORM для роботи з SQLite
+* **Pydantic v2** — валідація даних
+* **HTTPX** — асинхронний HTTP-клієнт для запитів до погодного API
+* **Uvicorn** — ASGI-сервер
 
-1. Create a new FastAPI application.
-2. Define a Pydantic model `City` with the following fields:
-    - `id`: a unique identifier for the city.
-    - `name`: the name of the city.
-    - `additional_info`: any additional information about the city.
-3. Implement a SQLite database using SQLAlchemy and create a corresponding `City` table.
-4. Implement the following endpoints:
-    - `POST /cities`: Create a new city.
-    - `GET /cities`: Get a list of all cities.
-    - **Optional**: `GET /cities/{city_id}`: Get the details of a specific city.
-    - **Optional**: `PUT /cities/{city_id}`: Update the details of a specific city.
-    - `DELETE /cities/{city_id}`: Delete a specific city.
+---
 
-### Part 2: Temperature API
+## 📁 Структура проєкту
 
-1. Define a Pydantic model `Temperature` with the following fields:
-    - `id`: a unique identifier for the temperature record.
-    - `city_id`: a reference to the city.
-    - `date_time`: the date and time when the temperature was recorded.
-    - `temperature`: the recorded temperature.
-2. Create a corresponding `Temperature` table in the database.
-3. Implement an endpoint `POST /temperatures/update` that fetches the current temperature for all cities in the database from an online resource of your choice. Store this data in the `Temperature` table. You should use an async function to fetch the temperature data.
-4. Implement the following endpoints:
-    - `GET /temperatures`: Get a list of all temperature records.
-    - `GET /temperatures/?city_id={city_id}`: Get the temperature records for a specific city.
+```text
+.
+├── database.py         # Підключення до SQLite та налаштування SessionLocal
+├── models.py           # Моделі БД (City, Temperature)
+├── main.py             # Точка входу, ініціалізація FastAPI та підключення роутерів
+├── cities/             # Модуль керування містами
+│   ├── crud.py
+│   ├── router.py
+│   └── schemas.py
+├── temperatures/       # Модуль керування температурами
+│   ├── crud.py
+│   ├── router.py
+│   ├── schemas.py
+│   └── service.py      # Асинхронний сервіс (httpx -> Open-Meteo API)
+└── requirements.txt
 
-### Additional Requirements
+🚀 Запуск проєкту
+1. Клонування та створення віртуального середовища
+Bash
+python -m venv venv
+# Для Windows:
+venv\Scripts\activate
+# Для Linux/macOS:
+source venv/bin/activate
+2. Встановлення залежностей
+Bash
+pip install -r requirements.txt
+3. Запуск сервера Uvicorn
+Bash
+uvicorn main:app --reload
+Після запуску сервіс буде доступний за адресою: http://127.0.0.1:8000
 
-- Use dependency injection where appropriate.
-- Organize your project according to the FastAPI project structure guidelines.
+📖 Документація API
+Інтерактивна документація (Swagger UI) генерується автоматично за адресою:
 
-## Evaluation Criteria
+Swagger UI: http://127.0.0.1:8000/docs
 
-Your task will be evaluated based on the following criteria:
+ReDoc: http://127.0.0.1:8000/redoc
 
-- Functionality: Your application should meet all the requirements outlined above.
-- Code Quality: Your code should be clean, readable, and well-organized.
-- Error Handling: Your application should handle potential errors gracefully.
-- Documentation: Your code should be well-documented (README.md).
+📌 Основні ендпоінти
+Міста (/cities)
+POST /cities/ — Додати нове місто
 
-## Deliverables
+GET /cities/ — Отримати список міст
 
-Please submit the following:
+GET /cities/{city_id} — Отримати деталі міста
 
-- The complete source code of your application.
-- A README file that includes:
-    - Instructions on how to run your application.
-    - A brief explanation of your design choices.
-    - Any assumptions or simplifications you made.
+PUT /cities/{city_id} — Оновити дані міста
 
-Good luck!
+DELETE /cities/{city_id} — Видалити місто (з каскадним видаленням температур)
+
+Температури (/temperatures)
+POST /temperatures/?city_id={id} — Запитувати асинхронно поточну температуру для міста через Open-Meteo та зберегти запис у базі
+
+GET /temperatures/ або GET /temperatures/?city_id={id} — Отримати історію температур (для всіх міст або з фільтром по city_id)
+
+
+---
+
+Запускайте проєкт командою `uvicorn main:app --reload` та відкривайте `[http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)` для тестування всього CRUD-циклу
