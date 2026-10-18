@@ -12,7 +12,7 @@ class TemperatureCreate(TemperatureBase):
     date_time: datetime | None = None
 
 
-class TemperatureUpdate(TemperatureBase):
+class Temperature(TemperatureBase):
     id: int
     date_time: datetime
 

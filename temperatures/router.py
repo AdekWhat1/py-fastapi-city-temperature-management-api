@@ -9,30 +9,31 @@ router = APIRouter(prefix="/temperatures", tags=["Temperatures"])
 
 
 @router.post(
-    "/",
-    response_model=schemas.Temperature,
-    status_code=status.HTTP_201_CREATED
+    "/update",
+    response_model=list[schemas.Temperature],
+    status_code=status.HTTP_200_OK,
 )
-async def update_temperature_for_city(city_id: int, db: Session = Depends(get_db)):
-    db_city = cities_crud.get_city(db, city_id=city_id)
-    if not db_city:
+async def update_temperatures_for_all_cities(db: Session = Depends(get_db)):
+    cities = cities_crud.get_cities(db=db, skip=0, limit=1000)
+    if not cities:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="City not found",
+            detail="No cities found in database to update temperatures.",
         )
 
-    current_temp = await service.fetch_temperature_for_city(db_city.name)
-    if current_temp is None:
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"Could not fetch weather data for city '{db_city.name}'",
-        )
+    created_temperatures = []
 
-    temp_create = schemas.TemperatureCreate(
-        city_id=city_id,
-        temperature=current_temp,
-    )
-    return crud.create_temperature(db=db, temperature=temp_create)
+    for city in cities:
+        current_temp = await service.fetch_temperature_for_city(city.name)
+        if current_temp is not None:
+            temp_create = schemas.TemperatureCreate(
+                city_id=city.id,
+                temperature=current_temp,
+            )
+            saved_temp = crud.create_temperature(db=db, temperature=temp_create)
+            created_temperatures.append(saved_temp)
+
+    return created_temperatures
 
 
 @router.get("/", response_model=list[schemas.Temperature])

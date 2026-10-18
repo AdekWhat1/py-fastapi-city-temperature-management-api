@@ -1,77 +1,83 @@
+Markdown
 # Weather & Cities Management API
 
-Модульний веб-сервіс на **FastAPI** для керування списком міст та збереження їхньої поточної температури з використанням асинхронного **Open-Meteo API**
+A modular **FastAPI** web service for managing cities and performing bulk asynchronous temperature updates using the **Open-Meteo API**
 
-## 🛠 Технологічний стек
+## 🛠 Tech Stack
 
 * **Python 3.10+**
-* **FastAPI** — веб-фреймворк
-* **SQLAlchemy** — ORM для роботи з SQLite
-* **Pydantic v2** — валідація даних
-* **HTTPX** — асинхронний HTTP-клієнт для запитів до погодного API
-* **Uvicorn** — ASGI-сервер
+* **FastAPI** — Web framework
+* **SQLAlchemy** — ORM for SQLite database interactions
+* **Pydantic v2** — Data validation and serialization
+* **HTTPX** — Async HTTP client for external API requests
+* **Uvicorn** — ASGI server
 
 ---
 
-## 📁 Структура проєкту
+## 🏗 Design Decisions
+
+* **Feature-Based Architecture:** The application is split into independent feature modules (`cities/` and `temperatures/`), providing a clean structure that is easy to scale and maintain
+* **External Weather Integration:** Uses the free **Open-Meteo API** (Geocoding API to resolve city coordinates and Forecast API to fetch current temperature metrics). No API keys required
+* **Cascade Deletion:** Database models configured with `cascade="all, delete-orphan"`. Deleting a city automatically cleans up all associated temperature history records
+* **Bulk Temperature Processing:** The `POST /temperatures/update` endpoint queries all existing cities from the database, asynchronously fetches their latest temperature readings, and saves the new entries in bulk
+
+---
+
+## 📁 Project Structure
 
 ```text
 .
-├── database.py         # Підключення до SQLite та налаштування SessionLocal
-├── models.py           # Моделі БД (City, Temperature)
-├── main.py             # Точка входу, ініціалізація FastAPI та підключення роутерів
-├── cities/             # Модуль керування містами
+├── database.py         # SQLite connection setup & SessionLocal configuration
+├── models.py           # SQLAlchemy models (City, Temperature)
+├── main.py             # Application entrypoint & router initialization
+├── cities/             # City management module
 │   ├── crud.py
 │   ├── router.py
 │   └── schemas.py
-├── temperatures/       # Модуль керування температурами
+├── temperatures/       # Temperature management module
 │   ├── crud.py
 │   ├── router.py
 │   ├── schemas.py
-│   └── service.py      # Асинхронний сервіс (httpx -> Open-Meteo API)
+│   └── service.py      # Async HTTP service (httpx -> Open-Meteo API)
 └── requirements.txt
+🚀 Getting Started
+1. Clone & Set Up Virtual Environment
 
-🚀 Запуск проєкту
-1. Клонування та створення віртуального середовища
-Bash
 python -m venv venv
-# Для Windows:
-venv\Scripts\activate
-# Для Linux/macOS:
-source venv/bin/activate
-2. Встановлення залежностей
-Bash
-pip install -r requirements.txt
-3. Запуск сервера Uvicorn
-Bash
-uvicorn main:app --reload
-Після запуску сервіс буде доступний за адресою: http://127.0.0.1:8000
 
-📖 Документація API
-Інтерактивна документація (Swagger UI) генерується автоматично за адресою:
+# On Windows:
+venv\Scripts\activate
+
+# On Linux/macOS:
+source venv/bin/activate
+2. Install Dependencies
+
+pip install -r requirements.txt
+3. Run the Uvicorn Server
+
+uvicorn main:app --reload
+The application will be running at http://127.0.0.1:8000.
+
+📖 API Documentation
+Interactive API documentation is generated automatically:
 
 Swagger UI: http://127.0.0.1:8000/docs
 
 ReDoc: http://127.0.0.1:8000/redoc
 
-📌 Основні ендпоінти
-Міста (/cities)
-POST /cities/ — Додати нове місто
+📌 Main Endpoints
+Cities (/cities)
+POST /cities/ — Create a new city
 
-GET /cities/ — Отримати список міст
+GET /cities/ — Retrieve all cities
 
-GET /cities/{city_id} — Отримати деталі міста
+GET /cities/{city_id} — Get specific city details
 
-PUT /cities/{city_id} — Оновити дані міста
+PUT /cities/{city_id} — Update a city's information
 
-DELETE /cities/{city_id} — Видалити місто (з каскадним видаленням температур)
+DELETE /cities/{city_id} — Delete a city (cascades to related temperature logs)
 
-Температури (/temperatures)
-POST /temperatures/?city_id={id} — Запитувати асинхронно поточну температуру для міста через Open-Meteo та зберегти запис у базі
+Temperatures (/temperatures)
+POST /temperatures/update — Fetch and save current weather for all registered cities via Open-Meteo
 
-GET /temperatures/ або GET /temperatures/?city_id={id} — Отримати історію температур (для всіх міст або з фільтром по city_id)
-
-
----
-
-Запускайте проєкт командою `uvicorn main:app --reload` та відкривайте `[http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)` для тестування всього CRUD-циклу
+GET /temperatures/ or GET /temperatures/?city_id={id} — Retrieve temperature history (filterable by city_id)
